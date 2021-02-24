@@ -31,7 +31,7 @@ and [Wacom Will SDK](https://developer-docs.wacom.com/sdk-for-ink/docs/overview)
 - [ ] Default ink types such as pencil, highlighter, pen, calligraphy, etc.
 - [ ] Download as nuget package
 
-## Ink Pipeline
+## Geometry Pipeline
 
 ![Ink Pipeline](/Docs/InkPipeline.svg)
 
