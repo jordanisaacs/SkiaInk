@@ -57,6 +57,7 @@ Implementation of algorithm is ported from R source code: [xspline.c](https://gi
 
 Places the chosen brush on each point of the xspline line according to pressure. Interpolate the shape of the brush when applying to interpolated points
 
+Interpolation algorithm: [SkiaSharp.Extended source](https://github.com/mono/SkiaSharp.Extended/blob/main/source/SkiaSharp.Extended/PathInterpolation/SKPathInterpolation.cs)?
 Drawn inspiration from [vwline](https://github.com/pmur002/vwline) package.
 
 ### Convex Hull Chain
