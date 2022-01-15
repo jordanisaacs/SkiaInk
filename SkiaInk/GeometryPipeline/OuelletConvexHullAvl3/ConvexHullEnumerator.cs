@@ -8,13 +8,13 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 	/// <summary>
 	/// Does not support multihtread
 	/// </summary>
-	public class ConvexHullEnumerator : IEnumerator<SKPoint>
+	public class ConvexHullEnumerator : IEnumerator<PolygonPoint>
 	{
 		// ******************************************************************
 		private ConvexHull _convexHull;
 
 		private Quadrant _currentQuadrant = null;
-		private AvlNode<SKPoint> _currentNode = null;
+		private AvlNode<PolygonPoint> _currentNode = null;
 
 		// ******************************************************************
 		public ConvexHullEnumerator(ConvexHull convexHull)
@@ -23,7 +23,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		}
 
 		// ******************************************************************
-		public SKPoint Current => _currentNode.Item;
+		public PolygonPoint Current => _currentNode.Item;
 
 		object IEnumerator.Current => _currentNode.Item;
 
@@ -50,7 +50,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			{
 				for (;;)
 				{
-					AvlNode<SKPoint> nextNode = _currentNode.GetNextNode();
+					AvlNode<PolygonPoint> nextNode = _currentNode.GetNextNode();
 					if (nextNode == null)
 					{
 						if (_currentQuadrant == _convexHull._q4)

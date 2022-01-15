@@ -3,20 +3,21 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using SkiaSharp;
+using SkiaInk.GeometryPipeline;
 using SkiaInk.GeometryPipeline.OuelletConvexHullAvl3.AvlTreeSet;
 
 namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 {
-	public abstract class Quadrant : AvlTreeSet<SKPoint>
+	public abstract class Quadrant : AvlTreeSet<PolygonPoint>
 	{
 		// ************************************************************************
-		public SKPoint FirstPoint;
-		public SKPoint LastPoint;
+		public PolygonPoint FirstPoint;
+		public PolygonPoint LastPoint;
 		public SKPoint RootPoint;
 
-		protected AvlNode<SKPoint> CurrentNode = null;
+		protected AvlNode<PolygonPoint> CurrentNode = null;
 
-		protected IReadOnlyList<SKPoint> ListOfPoint;
+		protected IReadOnlyList<PolygonPoint> ListOfPoint;
 
 		protected ConvexHull ConvexHull = null;
 
@@ -26,7 +27,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// </summary>
 		/// <param name="listOfPoint"></param>
 		/// <param name="comparer">Comparer is only used to add the second point (the last point, which is compared against the first one).</param>
-		public Quadrant(ConvexHull convexHull, IReadOnlyList<SKPoint> listOfPoint, IComparer<SKPoint> comparer) : base(comparer)
+		public Quadrant(ConvexHull convexHull, IReadOnlyList<PolygonPoint> listOfPoint, IComparer<PolygonPoint> comparer) : base(comparer)
 		{
 			ConvexHull = convexHull;
 			ListOfPoint = listOfPoint;
@@ -74,14 +75,14 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// <returns>Equivalent of tracing a line from p1 to p2 and tell if ptToCheck
 		///  is to the right or left of that line taking p1 as reference point.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		protected bool IsPointToTheRightOfOthers(SKPoint p1, SKPoint p2, SKPoint ptToCheck)
+		protected bool IsPointToTheRightOfOthers(PolygonPoint p1, PolygonPoint p2, PolygonPoint ptToCheck)
 		{
-			return ((p2.X - p1.X) * (ptToCheck.Y - p1.Y)) - ((p2.Y - p1.Y) * (ptToCheck.X - p1.X)) < 0;
+			return ((p2.Pos.X - p1.Pos.X) * (ptToCheck.Pos.Y - p1.Pos.Y)) - ((p2.Pos.Y - p1.Pos.Y) * (ptToCheck.Pos.X - p1.Pos.X)) < 0;
 		}
 
 		// ************************************************************************
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal abstract EnumConvexHullPoint IsHullPoint(ref SKPoint point);
+		internal abstract EnumConvexHullPoint IsHullPoint(ref PolygonPoint point);
 
 		// ************************************************************************
 		/// <summary>
@@ -89,14 +90,14 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// </summary>
 		/// <param name="point"></param>
 		/// <returns>1 = added, 0 = not a convex hull point, -1 convex hull point already exists</returns>
-		internal abstract EnumConvexHullPoint ProcessPoint(ref SKPoint point);
+		internal abstract EnumConvexHullPoint ProcessPoint(ref PolygonPoint point);
 
 		// ************************************************************************
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal abstract bool IsGoodQuadrantForPoint(SKPoint pt);
+		internal abstract bool IsGoodQuadrantForPoint(PolygonPoint pt);
 
 		// ************************************************************************
-		// protected abstract bool CanQuickReject(SKPoint pt, SKPoint ptHull);
+		// protected abstract bool CanQuickReject(PolygonPoint pt, PolygonPoint ptHull);
 
 		// ******************************************************************
 		/// <summary>
@@ -107,13 +108,13 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// <param name="pointNew">The new inserted point</param>
 		/// <param name="pointNext">The next point if you wan tto go that direction</param>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal void InvalidateNeighbors(AvlNode<SKPoint> pointPrevious, AvlNode<SKPoint> pointNew, AvlNode<SKPoint> pointNext)
+		internal void InvalidateNeighbors(AvlNode<PolygonPoint> pointPrevious, AvlNode<PolygonPoint> pointNew, AvlNode<PolygonPoint> pointNext)
 		{
 			bool invalidPoint;
 
 			if (pointPrevious != null)
 			{
-				AvlNode<SKPoint> previousPrevious = pointPrevious.GetPreviousNode();
+				AvlNode<PolygonPoint> previousPrevious = pointPrevious.GetPreviousNode();
 				for (; ; )
 				{
 					if (previousPrevious == null)
@@ -126,7 +127,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					{
 						break;
 					}
-					SKPoint ptPrevPrev = previousPrevious.Item;
+					PolygonPoint ptPrevPrev = previousPrevious.Item;
 
 					RemoveNode(pointPrevious);
 					pointPrevious = this.GetNode(ptPrevPrev);
@@ -137,7 +138,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			// Invalidate next(s)
 			if (pointNext != null)
 			{
-				AvlNode<SKPoint> nextNext = pointNext.GetNextNode();
+				AvlNode<PolygonPoint> nextNext = pointNext.GetNextNode();
 				for (; ; )
 				{
 					if (nextNext == null)
@@ -150,7 +151,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					{
 						break;
 					}
-					SKPoint ptNextNext = nextNext.Item;
+					PolygonPoint ptNextNext = nextNext.Item;
 
 					RemoveNode(pointNext);
 					pointNext = GetNode(ptNextNext);
@@ -208,7 +209,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				return false;
 			}
 
-			if (FirstPoint != q.FirstPoint || LastPoint != q.LastPoint || RootPoint != q.RootPoint)
+			if (FirstPoint == q.FirstPoint || LastPoint != q.LastPoint || RootPoint != q.RootPoint)
 			{
 				return false;
 			}

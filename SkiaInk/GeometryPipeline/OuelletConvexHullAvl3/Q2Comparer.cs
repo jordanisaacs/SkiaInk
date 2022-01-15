@@ -3,15 +3,15 @@ using SkiaSharp;
 
 namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 {
-	public class Q2Comparer : IComparer<SKPoint>
+	public class Q2Comparer : IComparer<PolygonPoint>
 	{
-		public int Compare(SKPoint pt1, SKPoint pt2)
+		public int Compare(PolygonPoint pt1, PolygonPoint pt2)
 		{
-			if (pt1.X > pt2.X) // Decreasing order
+			if (pt1.Pos.X > pt2.Pos.X) // Decreasing order
 			{
 				return -1;
 			}
-			if (pt1.X < pt2.X)
+			if (pt1.Pos.X < pt2.Pos.X)
 			{
 				return 1;
 			}

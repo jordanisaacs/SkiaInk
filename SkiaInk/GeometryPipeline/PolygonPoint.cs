@@ -8,21 +8,49 @@ namespace SkiaInk.GeometryPipeline
     /// <summary>
     /// Wrapper for <see cref="SKPoint"/> to associated points with polygons
     /// </summary>
-    struct PolygonPoint
+    public struct PolygonPoint
     {
-        public float X { readonly get; set; }
+        public int Polygon { readonly get; set; }
 
-        public float Y { readonly get; set; }
-
-        /// <summary>
-        /// Gets the number of the polygon associated with the <see cref="PolygonPoint"/>
-        /// </summary>
-        public int PolygonNum { get; }
-
-        public PolygonPoint(SKPoint point, int polygonNum)
+        public SKPoint Pos { readonly get; set; }
+        
+        public PolygonPoint(int polygonNumber, SKPoint pointPos)
         {
-            Position = point;
-            PolygonNum = polygonNum;
+            Polygon = polygonNumber;
+            Pos = pointPos;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            
+            if (!(obj is PolygonPoint))
+            {
+                return false;
+            }
+
+            var p = (PolygonPoint)obj;
+
+            return p.Polygon == Polygon && p.Pos == Pos;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Polygon, Pos);
+        }
+
+        public static bool operator !=(PolygonPoint obj1, PolygonPoint obj2)
+        {
+            return !(obj1 == obj2);
+        }
+
+        public static bool operator ==(PolygonPoint obj1, PolygonPoint obj2)
+        {
+            return obj1.Equals(obj2);
         }
     }
 }

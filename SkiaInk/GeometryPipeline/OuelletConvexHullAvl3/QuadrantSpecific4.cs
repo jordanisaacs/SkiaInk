@@ -12,7 +12,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		public const string QuadrantName = "Quadrant 4";
 
 		// ************************************************************************
-		public QuadrantSpecific4(ConvexHull convexHull, IReadOnlyList<SKPoint> listOfPoint) : base(convexHull, listOfPoint, new Q4Comparer())
+		public QuadrantSpecific4(ConvexHull convexHull, IReadOnlyList<PolygonPoint> listOfPoint) : base(convexHull, listOfPoint, new Q4Comparer())
 		{
 			Name = QuadrantName;
 		}
@@ -33,7 +33,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		// ******************************************************************
 		protected override void SetQuadrantLimits()
 		{
-			SKPoint firstPoint = this.ListOfPoint.First();
+			PolygonPoint firstPoint = this.ListOfPoint.First();
 
 			float rightX = firstPoint.X;
 			float rightY = firstPoint.Y;
@@ -43,49 +43,45 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 
 			foreach (var point in ListOfPoint)
 			{
-				if (point.X >= rightX)
+				if (point.Pos.X >= LastPoint.Pos.X)
 				{
-					if (point.X == rightX)
+					if (point.Pos.X == LastPoint.Pos.X)
 					{
-						if (point.Y < rightY)
+						if (point.Pos.Y < LastPoint.Pos.Y)
 						{
-							rightY = point.Y;
+							LastPoint = point;
 						}
 					}
 					else
 					{
-						rightX = point.X;
-						rightY = point.Y;
+						LastPoint = point;
 					}
 				}
 
-				if (point.Y <= bottomY)
+				if (point.Pos.Y <= FirstPoint.Pos.Y)
 				{
-					if (point.Y == bottomY)
+					if (point.Pos.Y == FirstPoint.Pos.Y)
 					{
-						if (point.X > bottomX)
+						if (point.Pos.X > FirstPoint.Pos.X)
 						{
-							bottomX = point.X;
+							FirstPoint = point;
 						}
 					}
 					else
 					{
-						bottomX = point.X;
-						bottomY = point.Y;
+						FirstPoint = point;
 					}
 				}
 			}
 
-			FirstPoint = new SKPoint(bottomX, bottomY);
-			LastPoint = new SKPoint(rightX, rightY);
-			RootPoint = new SKPoint(bottomX, rightY);
+			RootPoint = new SKPoint(FirstPoint.Pos.X, LastPoint.Pos.Y);
 		}
 
 		// ******************************************************************
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal override bool IsGoodQuadrantForPoint(SKPoint pt)
+		internal override bool IsGoodQuadrantForPoint(PolygonPoint pt)
 		{
-			if (pt.X >= this.RootPoint.X && pt.Y <= this.RootPoint.Y)
+			if (pt.Pos.X >= this.RootPoint.X && pt.Pos.Y <= this.RootPoint.Y)
 			{
 				return true;
 			}
@@ -95,15 +91,15 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 
 		// ******************************************************************
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal override EnumConvexHullPoint IsHullPoint(ref SKPoint point)
+		internal override EnumConvexHullPoint IsHullPoint(ref PolygonPoint point)
 		{
 			CurrentNode = Root;
-			AvlNode<SKPoint> currentPrevious = null;
-			AvlNode<SKPoint> currentNext = null;
+			AvlNode<PolygonPoint> currentPrevious = null;
+			AvlNode<PolygonPoint> currentNext = null;
 
 			while (CurrentNode != null)
 			{
-				if (point.X > CurrentNode.Item.X)
+				if (point.Pos.X > CurrentNode.Item.Pos.X)
 				{
 					if (CurrentNode.Right != null)
 					{
@@ -122,7 +118,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 						return EnumConvexHullPoint.NotConvexHullPoint;
 					}
 				}
-				else if (point.X < CurrentNode.Item.X)
+				else if (point.Pos.X < CurrentNode.Item.Pos.X)
 				{
 					if (CurrentNode.Left != null)
 					{
@@ -143,9 +139,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				}
 				else
 				{
-					if (point.Y >= CurrentNode.Item.Y)
+					if (point.Pos.Y >= CurrentNode.Item.Pos.Y)
 					{
-						if (point.Y == CurrentNode.Item.Y)
+						if (point.Pos.Y == CurrentNode.Item.Pos.Y)
 						{
 							return EnumConvexHullPoint .AlreadyExists;
 						}
@@ -168,11 +164,11 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// It is specific by Quadrant to improve efficiency.
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal override EnumConvexHullPoint ProcessPoint(ref SKPoint point)
+		internal override EnumConvexHullPoint ProcessPoint(ref PolygonPoint point)
 		{
 			CurrentNode = Root;
-			AvlNode<SKPoint> currentPrevious = null;
-			AvlNode<SKPoint> currentNext = null;
+			AvlNode<PolygonPoint> currentPrevious = null;
+			AvlNode<PolygonPoint> currentNext = null;
 
 			while (CurrentNode != null)
 			{
@@ -182,7 +178,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				}
 
 				var insertionSide = Side.Unknown;
-				if (point.X > CurrentNode.Item.X)
+				if (point.Pos.X > CurrentNode.Item.Pos.X)
 				{
 					if (CurrentNode.Right != null)
 					{
@@ -203,7 +199,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 
 					insertionSide = Side.Right;
 				}
-				else if (point.X < CurrentNode.Item.X)
+				else if (point.Pos.X < CurrentNode.Item.Pos.X)
 				{
 					if (CurrentNode.Left != null)
 					{
@@ -226,9 +222,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				}
 				else
 				{
-					if (point.Y >= CurrentNode.Item.Y)
+					if (point.Pos.Y >= CurrentNode.Item.Pos.Y)
 					{
-						if (point.Y == CurrentNode.Item.Y)
+						if (point.Pos.Y == CurrentNode.Item.Pos.Y)
 						{
 							return EnumConvexHullPoint .AlreadyExists;
 						}
@@ -283,7 +279,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				}
 
 				// Should insert but no invalidation is required. (That's why we need to insert... can't replace an adjacent neightbor)
-				AvlNode<SKPoint> newNode = new AvlNode<SKPoint>();
+				AvlNode<PolygonPoint> newNode = new AvlNode<PolygonPoint>();
 				if (insertionSide == Side.Right)
 				{
 					newNode.Parent = CurrentNode;
@@ -307,9 +303,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 
 		// ******************************************************************
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal static bool CanQuickReject(ref SKPoint pt, ref SKPoint ptHull)
+		internal static bool CanQuickReject(ref PolygonPoint pt, ref PolygonPoint ptHull)
 		{
-			if (pt.X <= ptHull.X && pt.Y >= ptHull.Y)
+			if (pt.Pos.X <= ptHull.Pos.X && pt.Pos.Y >= ptHull.Pos.Y)
 			{
 				return true;
 			}

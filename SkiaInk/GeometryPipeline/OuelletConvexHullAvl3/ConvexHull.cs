@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using SkiaInk.GeometryPipeline.OuelletConvexHullAvl3.AvlTreeSet;
 using SkiaInk.GeometryPipeline.OuelletConvexHullAvl3.Util;
+using SkiaInk.GeometryPipeline;
 using SkiaSharp;
 
 namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
@@ -15,7 +16,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 	// From: https://github.com/EricOuellet2/ConvexHull
 	// Algorithm Overview: https://www.codeproject.com/Articles/1232301/First-and-Extremely-fast-Online-D-Convex-Hull-Algo
 	// Changed point to PolygonPoint
-	public class ConvexHull : IReadOnlyCollection<SKPoint>
+	public class ConvexHull : IReadOnlyCollection<PolygonPoint>
 	{
 		// Quadrant: Q2 | Q1
 		//	         -------
@@ -31,10 +32,10 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		internal bool IsInitDone { get; set; } = false;
 
 		// ******************************************************************
-		private static SKPoint[] _emptyListOfPoint = new SKPoint[0];
+		private static PolygonPoint[] _emptyListOfPoint = new PolygonPoint[0];
 
 		// ******************************************************************
-		private void Init(IReadOnlyList<SKPoint> points)
+		private void Init(IReadOnlyList<PolygonPoint> points)
 		{
 			if (points == null || points.Count == 0)
 			{
@@ -54,22 +55,22 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		// ******************************************************************
 		private bool IsQuadrantAreDisjoint()
 		{
-			if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, _q3.RootPoint))
+			if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, _q3.RootPoint))
 			{
 				return false;
 			}
 
-			if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, _q4.RootPoint))
+			if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, _q4.RootPoint))
 			{
 				return false;
 			}
 
-			if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, _q1.RootPoint))
+			if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, _q1.RootPoint))
 			{
 				return false;
 			}
 
-			if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, _q2.RootPoint))
+			if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, _q2.RootPoint))
 			{
 				return false;
 			}
@@ -83,7 +84,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// Results are kept per quadrant. To get result, either see: GetResultsAsArrayOfPoint or
 		/// GetEnumerator
 		/// </summary>
-		public void CalcConvexHull(IReadOnlyList<SKPoint> points)
+		public void CalcConvexHull(IReadOnlyList<PolygonPoint> points)
 		{
 			Init(points);
 
@@ -112,9 +113,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		}
 
 		// ************************************************************************
-		private void ProcessPointsForDisjointQuadrant(IReadOnlyList<SKPoint> points)
+		private void ProcessPointsForDisjointQuadrant(IReadOnlyList<PolygonPoint> points)
 		{
-			SKPoint point;
+			PolygonPoint point;
 			SKPoint q1Root = _q1.RootPoint;
 			SKPoint q2Root = _q2.RootPoint;
 			SKPoint q3Root = _q3.RootPoint;
@@ -128,26 +129,27 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
 					_q1.ProcessPoint(ref point);
 					goto Q1First;
 				}
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
 					_q2.ProcessPoint(ref point);
 					goto Q2First;
 				}
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
 					_q3.ProcessPoint(ref point);
 					goto Q3First;
 				}
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
 					_q4.ProcessPoint(ref point);
 					goto Q4First;
@@ -165,26 +167,27 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
 					_q2.ProcessPoint(ref point);
 					goto Q2First;
 				}
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
 					_q3.ProcessPoint(ref point);
 					goto Q3First;
 				}
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
 					_q4.ProcessPoint(ref point);
 					goto Q4First;
 				}
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
 					_q1.ProcessPoint(ref point);
 					goto Q1First;
@@ -202,26 +205,27 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
 					_q3.ProcessPoint(ref point);
 					goto Q3First;
 				}
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
 					_q4.ProcessPoint(ref point);
 					goto Q4First;
 				}
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
 					_q1.ProcessPoint(ref point);
 					goto Q1First;
 				}
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
 					_q2.ProcessPoint(ref point);
 					goto Q2First;
@@ -239,26 +243,27 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
 					_q4.ProcessPoint(ref point);
 					goto Q4First;
 				}
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
 					_q1.ProcessPoint(ref point);
 					goto Q1First;
 				}
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
 					_q2.ProcessPoint(ref point);
 					goto Q2First;
 				}
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
 					_q3.ProcessPoint(ref point);
 					goto Q3First;
@@ -277,9 +282,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 
 		// ************************************************************************
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void ProcessPointsForNotDisjointQuadrant(IReadOnlyList<SKPoint> points)
+		private void ProcessPointsForNotDisjointQuadrant(IReadOnlyList<PolygonPoint> points)
 		{
-			SKPoint point;
+			PolygonPoint point;
 			SKPoint q1Root = _q1.RootPoint;
 			SKPoint q2Root = _q2.RootPoint;
 			SKPoint q3Root = _q3.RootPoint;
@@ -293,18 +298,19 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, pos))
 					{
 						_q1.ProcessPoint(ref point);
 						goto Q1First;
 					}
 
-					if (point.X < q3Root.X && point.Y < q3Root.Y)
+					if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, pos))
 						{
 							_q3.ProcessPoint(ref point);
 						}
@@ -315,17 +321,17 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q1First;
 				}
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, pos))
 					{
 						_q2.ProcessPoint(ref point);
 						goto Q2First;
 					}
 
-					if (point.X > q4Root.X && point.Y < q4Root.Y)
+					if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, pos))
 						{
 							_q4.ProcessPoint(ref point);
 						}
@@ -336,18 +342,18 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q2First;
 				}
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, pos))
 					{
 						_q3.ProcessPoint(ref point);
 					}
 
 					goto Q3First;
 				}
-				else if (point.X > q4Root.X && point.Y < q4Root.Y)
+				else if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, pos))
 					{
 						_q4.ProcessPoint(ref point);
 					}
@@ -367,18 +373,19 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, pos))
 					{
 						_q2.ProcessPoint(ref point);
 						goto Q2First;
 					}
 
-					if (point.X > q4Root.X && point.Y < q4Root.Y)
+					if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, pos))
 						{
 							_q4.ProcessPoint(ref point);
 						}
@@ -389,17 +396,17 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q2First;
 				}
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, pos))
 					{
 						_q3.ProcessPoint(ref point);
 						goto Q3First;
 					}
 
-					if (point.X > q1Root.X && point.Y > q1Root.Y)
+					if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, pos))
 						{
 							_q1.ProcessPoint(ref point);
 						}
@@ -410,18 +417,18 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q3First;
 				}
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, pos))
 					{
 						_q4.ProcessPoint(ref point);
 					}
 
 					goto Q4First;
 				}
-				else if (point.X > q1Root.X && point.Y > q1Root.Y)
+				else if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, pos))
 					{
 						_q1.ProcessPoint(ref point);
 					}
@@ -441,18 +448,19 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, pos))
 					{
 						_q3.ProcessPoint(ref point);
 						goto Q3First;
 					}
 
-					if (point.X > q1Root.X && point.Y > q1Root.Y)
+					if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, pos))
 						{
 							_q1.ProcessPoint(ref point);
 						}
@@ -463,17 +471,17 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q3First;
 				}
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, pos))
 					{
 						_q4.ProcessPoint(ref point);
 						goto Q4First;
 					}
 
-					if (point.X < q2Root.X && point.Y > q2Root.Y)
+					if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, pos))
 						{
 							_q2.ProcessPoint(ref point);
 						}
@@ -484,17 +492,17 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q4First;
 				}
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, pos))
 					{
 						_q1.ProcessPoint(ref point);
 						goto Q1First;
 					}
 				}
-				else if (point.X < q2Root.X && point.Y > q2Root.Y)
+				else if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, pos))
 					{
 						_q2.ProcessPoint(ref point);
 						goto Q2First;
@@ -513,18 +521,19 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			if (index < pointCount)
 			{
 				point = points[index++];
+				SKPoint pos = point.Pos;
 
-				if (point.X > q4Root.X && point.Y < q4Root.Y)
+				if (pos.X > q4Root.X && pos.Y < q4Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint.Pos, _q4.LastPoint.Pos, pos))
 					{
 						_q4.ProcessPoint(ref point);
 						goto Q4First;
 					}
 
-					if (point.X < q2Root.X && point.Y > q2Root.Y)
+					if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, pos))
 						{
 							_q2.ProcessPoint(ref point);
 						}
@@ -535,17 +544,17 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q4First;
 				}
 
-				if (point.X > q1Root.X && point.Y > q1Root.Y)
+				if (pos.X > q1Root.X && pos.Y > q1Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint.Pos, _q1.LastPoint.Pos, pos))
 					{
 						_q1.ProcessPoint(ref point);
 						goto Q1First;
 					}
 
-					if (point.X < q3Root.X && point.Y < q3Root.Y)
+					if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 					{
-						if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+						if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, pos))
 						{
 							_q3.ProcessPoint(ref point);
 						}
@@ -556,18 +565,18 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					goto Q1First;
 				}
 
-				if (point.X < q3Root.X && point.Y < q3Root.Y)
+				if (pos.X < q3Root.X && pos.Y < q3Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint.Pos, _q3.LastPoint.Pos, pos))
 					{
 						_q3.ProcessPoint(ref point);
 						goto Q3First;
 					}
 				}
 
-				if (point.X < q2Root.X && point.Y > q2Root.Y)
+				if (pos.X < q2Root.X && pos.Y > q2Root.Y)
 				{
-					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+					if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint.Pos, _q2.LastPoint.Pos, pos))
 					{
 						_q2.ProcessPoint(ref point);
 						goto Q2First;
@@ -595,13 +604,13 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// <param name="point"></param>
 		/// <returns>1 = hull point, 0 = not a convex hull point, -1 convex hull point already exists</returns>		
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private EnumConvexHullPoint EvaluatePointForPointInsideQuadrantLimits(SKPoint point)
+		private EnumConvexHullPoint EvaluatePointForPointInsideQuadrantLimits(PolygonPoint point)
 		{
 			EnumConvexHullPoint result;
-
-			if (point.X > _q1.RootPoint.X && point.Y > _q1.RootPoint.Y)
+			SKPoint pos = point.Pos;
+			if (pos.X > _q1.RootPoint.X && pos.Y > _q1.RootPoint.Y)
 			{
-				if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, point))
+				if (Geometry.IsPointToTheRightOfOthers(_q1.FirstPoint, _q1.LastPoint, pos))
 				{
 					result = _q1.IsHullPoint(ref point);
 					if (result != 0)
@@ -610,7 +619,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					}
 				}
 
-				if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+				if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, pos))
 				{
 					return _q3.IsHullPoint(ref point);
 				}
@@ -618,9 +627,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				return EnumConvexHullPoint.NotConvexHullPoint;
 			}
 
-			if (point.X < _q2.RootPoint.X && point.Y > _q2.RootPoint.Y)
+			if (pos.X < _q2.RootPoint.X && pos.Y > _q2.RootPoint.Y)
 			{
-				if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, point))
+				if (Geometry.IsPointToTheRightOfOthers(_q2.FirstPoint, _q2.LastPoint, pos))
 				{
 					result = _q2.IsHullPoint(ref point);
 					if (result != 0)
@@ -629,7 +638,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 					}
 				}
 
-				if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+				if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, pos))
 				{
 					return _q4.IsHullPoint(ref point);
 				}
@@ -637,9 +646,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				return EnumConvexHullPoint.NotConvexHullPoint;
 			}
 
-			if (point.X < _q3.RootPoint.X && point.Y < _q3.RootPoint.Y)
+			if (pos.X < _q3.RootPoint.X && pos.Y < _q3.RootPoint.Y)
 			{
-				if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, point))
+				if (Geometry.IsPointToTheRightOfOthers(_q3.FirstPoint, _q3.LastPoint, pos))
 				{
 					return _q3.IsHullPoint(ref point);
 				}
@@ -647,9 +656,9 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				return EnumConvexHullPoint.NotConvexHullPoint;
 			}
 
-			if (point.X > _q4.RootPoint.X && point.Y < _q4.RootPoint.Y)
+			if (pos.X > _q4.RootPoint.X && pos.Y < _q4.RootPoint.Y)
 			{
-				if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, point))
+				if (Geometry.IsPointToTheRightOfOthers(_q4.FirstPoint, _q4.LastPoint, pos))
 				{
 					return _q4.IsHullPoint(ref point);
 				}
@@ -782,7 +791,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// </summary>
 		/// <param name="pt"></param>
 		/// <returns>Same point if only one. Neighbors if any.</returns>
-		public Tuple<SKPoint, SKPoint> GetNeighbors(SKPoint pt)
+		public Tuple<PolygonPoint, PolygonPoint> GetNeighbors(PolygonPoint pt)
 		{
 			if (Count <= 1)
 			{
@@ -790,13 +799,13 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				{
 					if (_q1.FirstPoint == pt)
 					{
-						return new Tuple<SKPoint, SKPoint>(pt, pt);
+						return new Tuple<PolygonPoint, PolygonPoint>(pt, pt);
 					}
 				}
 			}
 			else
 			{
-				AvlNode<SKPoint> node = null;
+				AvlNode<PolygonPoint> node = null;
 
 				Quadrant q = _q1;
 				do
@@ -818,7 +827,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 								nodeNext = GetNextNodeNotBeingPoint(q, pt);
 							}
 
-							return new Tuple<SKPoint, SKPoint>(nodePrevious.Item, nodeNext.Item);
+							return new Tuple<PolygonPoint, PolygonPoint>(nodePrevious.Item, nodeNext.Item);
 						}
 					}
 
@@ -839,7 +848,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// </summary>
 		/// <param name="pt"></param>
 		/// <returns>Same point if only one. Next point if more than one and point exists. default(SKPoint) otherwise (not found)</returns>
-		public SKPoint GetNextPoint(SKPoint pt)
+		public PolygonPoint GetNextPoint(PolygonPoint pt)
 		{
 			if (Count <= 1)
 			{
@@ -853,7 +862,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			}
 			else
 			{
-				AvlNode<SKPoint> node = null;
+				AvlNode<PolygonPoint> node = null;
 
 				Quadrant q = _q1;
 				do
@@ -877,7 +886,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				} while (q != _q1);
 			}
 
-			return default(SKPoint);
+			return default(PolygonPoint);
 		}
 
 		// ******************************************************************
@@ -890,7 +899,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// </summary>
 		/// <param name="pt"></param>
 		/// <returns>Same point if only one. Next point if more than one and point exists. default(SKPoint) otherwise (not found)</returns>
-		public SKPoint GetPreviousPoint(SKPoint pt)
+		public PolygonPoint GetPreviousPoint(PolygonPoint pt)
 		{
 			if (Count <= 1)
 			{
@@ -904,7 +913,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			}
 			else
 			{
-				AvlNode<SKPoint> node = null;
+				AvlNode<PolygonPoint> node = null;
 
 				Quadrant q = _q1;
 				do
@@ -928,7 +937,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				} while (q != _q1);
 			}
 
-			return default(SKPoint);
+			return default(PolygonPoint);
 		}
 
 		// ******************************************************************
@@ -938,12 +947,12 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// <param name="q">Quadrant where the point has no next node</param>
 		/// <param name="pt">Last point of a quadrant</param>
 		/// <returns></returns>
-		private AvlNode<SKPoint> GetNextNodeNotBeingPoint(Quadrant q, SKPoint pt)
+		private AvlNode<PolygonPoint> GetNextNodeNotBeingPoint(Quadrant q, PolygonPoint pt)
 		{
 			for (; ; )
 			{
 				q = q.GetNextQuadrant();
-				AvlNode<SKPoint> nodeNext = q.GetFirstNode();
+				AvlNode<PolygonPoint> nodeNext = q.GetFirstNode();
 				if (nodeNext.Item != pt)
 				{
 					return nodeNext;
@@ -964,12 +973,12 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// <param name="q">Quadrant where the point has no next node</param>
 		/// <param name="pt">Last point of a quadrant</param>
 		/// <returns></returns>
-		private AvlNode<SKPoint> GetPreviousNodeNotBeingPoint(Quadrant q, SKPoint pt)
+		private AvlNode<PolygonPoint> GetPreviousNodeNotBeingPoint(Quadrant q, PolygonPoint pt)
 		{
 			for (; ; )
 			{
 				q = q.GetPreviousQuadrant();
-				AvlNode<SKPoint> nodePrevious = q.GetLastNode();
+				AvlNode<PolygonPoint> nodePrevious = q.GetLastNode();
 				if (nodePrevious.Item != pt)
 				{
 					return nodePrevious;
@@ -1435,7 +1444,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		#endregion
 
 		// ************************************************************************
-		private void SetQuadrantLimitsOneThread(IReadOnlyList<SKPoint> points)
+		private void SetQuadrantLimitsOneThread(IReadOnlyList<PolygonPoint> points)
 		{
 			SKPoint ptFirst = points.First();
 
@@ -1988,18 +1997,18 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// </summary>
 		/// <param name="shouldCloseTheGraph"></param>
 		/// <returns></returns>
-		public SKPoint[] GetResultsAsArrayOfPoint(bool shouldCloseTheGraph = true)
+		public PolygonPoint[] GetResultsAsArrayOfPoint(bool shouldCloseTheGraph = true)
 		{
 			int countOfPoints = Count;
 
 			if (!IsInitDone || countOfPoints == 0)
 			{
-				return new SKPoint[0];
+				return new PolygonPoint[0];
 			}
 
 			if (countOfPoints == 1) // Case where there is only one point
 			{
-				return new SKPoint[] { _q1.FirstPoint };
+				return new PolygonPoint[] { _q1.FirstPoint };
 			}
 
 			if (shouldCloseTheGraph)
@@ -2007,11 +2016,11 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				countOfPoints++;
 			}
 
-			SKPoint[] results = new SKPoint[countOfPoints];
+			PolygonPoint[] results = new PolygonPoint[countOfPoints];
 
 			int resultIndex = -1;
 
-			SKPoint lastPoint = _q4.LastPoint;
+			PolygonPoint lastPoint = _q4.LastPoint;
 
 			foreach (var quadrant in _quadrants)
 			{
@@ -2076,7 +2085,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 		/// some slowness in regard to an iterating over an array.
 		/// </summary>
 		/// <returns></returns>
-		public IEnumerator<SKPoint> GetEnumerator()
+		public IEnumerator<PolygonPoint> GetEnumerator()
 		{
 			return new ConvexHullEnumerator(this);
 		}
@@ -2104,42 +2113,42 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 			Assert(Left <= Right);
 			Assert(Top >= Bottom);
 
-			Assert(_q1.FirstPoint.X == Right);
-			Assert(_q1.LastPoint.Y == Top);
+			Assert(_q1.FirstPoint.Pos.X == Right);
+			Assert(_q1.LastPoint.Pos.Y == Top);
 
-			Assert(_q2.FirstPoint.Y == Top);
-			Assert(_q2.LastPoint.X == Left);
+			Assert(_q2.FirstPoint.Pos.Y == Top);
+			Assert(_q2.LastPoint.Pos.X == Left);
 
-			Assert(_q3.FirstPoint.X == Left);
-			Assert(_q3.LastPoint.Y == Bottom);
+			Assert(_q3.FirstPoint.Pos.X == Left);
+			Assert(_q3.LastPoint.Pos.Y == Bottom);
 
-			Assert(_q4.FirstPoint.Y == Bottom);
-			Assert(_q4.LastPoint.X == Right);
+			Assert(_q4.FirstPoint.Pos.Y == Bottom);
+			Assert(_q4.LastPoint.Pos.X == Right);
 
-			Assert(_q1.FirstPoint.Y >= _q4.LastPoint.Y);
-			Assert(_q2.FirstPoint.X <= _q1.LastPoint.X);
-			Assert(_q3.FirstPoint.Y <= _q2.LastPoint.Y);
-			Assert(_q4.FirstPoint.X >= _q3.LastPoint.X);
+			Assert(_q1.FirstPoint.Pos.Y >= _q4.LastPoint.Pos.Y);
+			Assert(_q2.FirstPoint.Pos.X <= _q1.LastPoint.Pos.X);
+			Assert(_q3.FirstPoint.Pos.Y <= _q2.LastPoint.Pos.Y);
+			Assert(_q4.FirstPoint.Pos.X >= _q3.LastPoint.Pos.X);
 
 			Assert(_q1.FirstPoint == _q1.GetFirstNode().Item);
 			Assert(_q1.LastPoint == _q1.GetLastNode().Item);
-			Assert(_q1.RootPoint.X == _q1.LastPoint.X);
-			Assert(_q1.RootPoint.Y == _q1.FirstPoint.Y);
+			Assert(_q1.RootPoint.X == _q1.LastPoint.Pos.X);
+			Assert(_q1.RootPoint.Y == _q1.FirstPoint.Pos.Y);
 
 			Assert(_q2.FirstPoint == _q2.GetFirstNode().Item);
 			Assert(_q2.LastPoint == _q2.GetLastNode().Item);
-			Assert(_q2.RootPoint.X == _q2.FirstPoint.X);
-			Assert(_q2.RootPoint.Y == _q2.LastPoint.Y);
+			Assert(_q2.RootPoint.X == _q2.FirstPoint.Pos.X);
+			Assert(_q2.RootPoint.Y == _q2.LastPoint.Pos.Y);
 
 			Assert(_q3.FirstPoint == _q3.GetFirstNode().Item);
 			Assert(_q3.LastPoint == _q3.GetLastNode().Item);
-			Assert(_q3.RootPoint.X == _q3.LastPoint.X);
-			Assert(_q3.RootPoint.Y == _q3.FirstPoint.Y);
+			Assert(_q3.RootPoint.X == _q3.LastPoint.Pos.X);
+			Assert(_q3.RootPoint.Y == _q3.FirstPoint.Pos.Y);
 
 			Assert(_q4.FirstPoint == _q4.GetFirstNode().Item);
 			Assert(_q4.LastPoint == _q4.GetLastNode().Item);
-			Assert(_q4.RootPoint.X == _q4.FirstPoint.X);
-			Assert(_q4.RootPoint.Y == _q4.LastPoint.Y);
+			Assert(_q4.RootPoint.X == _q4.FirstPoint.Pos.X);
+			Assert(_q4.RootPoint.Y == _q4.LastPoint.Pos.Y);
 		}
 
 		// ******************************************************************
@@ -2184,7 +2193,7 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				return;
 			}
 			
-			SKPoint[] results = GetResultsAsArrayOfPoint();
+			PolygonPoint[] results = GetResultsAsArrayOfPoint();
 			int index = 0;
 
 			if (results.Length > 1)
@@ -2196,14 +2205,14 @@ namespace SkiaInk.GeometryPipeline.OuelletConvexHullAvl3
 				}
 			}
 
-			foreach (SKPoint pt in this)
+			foreach (PolygonPoint pt in this)
 			{
 				Debug.Assert(results[index] == pt);
-				SKPoint ptNext = GetNextPoint(pt);
+				PolygonPoint ptNext = GetNextPoint(pt);
 				int indexNext = index >= results.Length - 1 ? 0 : index + 1;
 				Debug.Assert(ptNext == results[indexNext]);
 
-				SKPoint ptPrevious = GetPreviousPoint(pt);
+				PolygonPoint ptPrevious = GetPreviousPoint(pt);
 				int indexPrevious = index == 0 ? results.Length - 2 : index - 1;
 				if (indexPrevious < 0) // When results.length = 1
 				{
